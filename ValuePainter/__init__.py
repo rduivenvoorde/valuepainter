@@ -9,9 +9,6 @@
 # (at your option) any later version.
 #---------------------------------------------------------------------
 
-#from value_painter import ValuePainter
-from PyQt5.QtWidgets import QAction, QMessageBox
-
 from .value_painter import ValuePainter
 
 def classFactory(iface):

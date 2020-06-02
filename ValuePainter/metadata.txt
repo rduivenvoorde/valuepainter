@@ -1,10 +1,12 @@
 [general]
 name=Value Painter
 description=Plugin for setting attribute values by 1 click. Useful tool for (large) manual classification tasks
-about=About this plugin
+about=Plugin for setting attribute values by 1 click
 version=0.0.1
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 author=Raymond Nijssen
 email=r.nijssen@terglobo.nl
-repository=blablah
+repository=https://github.com/raymondnijssen/valuepainter
+homepage=https://github.com/raymondnijssen/valuepainter
+tracker=https://github.com/raymondnijssen/valuepainter/issues

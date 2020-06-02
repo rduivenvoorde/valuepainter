@@ -6,6 +6,7 @@ from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 
 
 
+
 class ValuePainter:
 
     def __init__(self, iface):
@@ -54,10 +55,6 @@ class ValuePainter:
         del self.toolbar
 
 
-    def run(self):
-        QMessageBox.information(None, 'Value Painter plugin', 'Do something useful here...')
-
-
     def updateFieldPicker(self):
         if isinstance(self.layer_picker.currentLayer(), QgsVectorLayer):
             self.paint_tool.setLayer(self.layer_picker.currentLayer())
@@ -71,14 +68,13 @@ class ValuePainter:
         layer = self.layer_picker.currentLayer()
         field_name = self.field_picker.currentField()
         field_index = layer.fields().indexFromName(field_name)
-
-        print(layer, field_name, field_index)
+        #print(layer, field_name, field_index)
 
         ews = layer.editorWidgetSetup(field_index)
-        print(ews.type(), ews.config())
+        #print(ews.type(), ews.config())
 
         self.editor_widget = self.getWidget(ews)
-        print(self.editor_widget)
+        #print(self.editor_widget)
 
         if self.editor_widget_action is not None:
             self.toolbar.removeAction(self.editor_widget_action)
@@ -106,35 +102,25 @@ class ValuePainter:
 
 
     def togglePaintTool(self):
-        print('paint mode:', self.action_paint.isChecked())
-        canvas = self.iface.mapCanvas()
-        canvas.setMapTool(self.paint_tool)
+        #print('paint mode:', self.action_paint.isChecked())
+        self.iface.mapCanvas().setMapTool(self.paint_tool)
 
 
     def updateCurrentLayer(self):
         layer is self.iface.activeLayer()
-        #self.paint_tool.
 
 
     def featureIdentified(self, feat):
-        print('hiero')
-        print(feat)
-        print(feat.id())
-        print(feat.attributes())
         layer = self.iface.activeLayer()
         if layer == self.layer_picker.currentLayer():
             print('same layer')
             if layer.isEditable():
                 field_name = self.field_picker.currentField()
                 field_index = layer.fields().lookupField(field_name)
-                print(field_index)
                 value = self.getEditorWidgetValue()
-                print('value', value)
                 feat.setAttribute(field_index, value)
                 layer.updateFeature(feat)
                 layer.triggerRepaint()
-            else:
-                print('Layer {} not editable'.format(layer.name()))
 
 
     def getEditorWidgetValue(self):
