@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QAction, QMessageBox, QLineEdit, QComboBox
 
-from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox, QgsMapTool
+from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox, QgsMapToolIdentifyFeature
 
+from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
 
 
 
@@ -9,21 +10,21 @@ class ValuePainter:
 
     def __init__(self, iface):
         self.iface = iface
+        self.old_map_tool = self.iface.mapCanvas().mapTool()
 
 
     def initGui(self):
         self.toolbar = self.iface.addToolBar("Value Painter")
-        print(self.toolbar)
-        self.action = QAction('Paint!', self.iface.mainWindow())
 
-        self.toolbar.addAction(self.action)
-        self.action.triggered.connect(self.run)
+        self.action_paint = QAction('Paint!', self.iface.mainWindow())
+        self.action_paint.setCheckable(True)
+        self.toolbar.addAction(self.action_paint)
 
-        self.map_tool = QgsMapTool(self.iface.mapCanvas())
-        print(self.map_tool)
-        self.map_tool_action = self.toolbar.addWidget(self.map_tool)
+        self.paint_tool = QgsMapToolIdentifyFeature(self.iface.mapCanvas())
+        self.paint_tool.setAction(self.action_paint)
 
         self.layer_picker = QgsMapLayerComboBox()
+        self.layer_picker.setFilters(QgsMapLayerProxyModel.VectorLayer)
         self.layer_picker_action = self.toolbar.addWidget(self.layer_picker)
 
         self.field_picker = QgsFieldComboBox()
@@ -32,17 +33,24 @@ class ValuePainter:
         self.editor_widget = None
         self.editor_widget_action = None
 
+        self.paint_tool.featureIdentified.connect(self.featureIdentified)
+        self.action_paint.triggered.connect(self.togglePaintTool)
         self.layer_picker.layerChanged.connect(self.updateFieldPicker)
         self.field_picker.fieldChanged.connect(self.updateEditorWidget)
 
 
     def unload(self):
+        self.paint_tool.featureIdentified.disconnect(self.featureIdentified)
         self.layer_picker.layerChanged.disconnect(self.updateFieldPicker)
         self.field_picker.fieldChanged.disconnect(self.updateEditorWidget)
-        self.action.triggered.disconnect(self.run)
+        self.action_paint.triggered.disconnect(self.togglePaintTool)
 
-        self.toolbar.removeAction(self.action)
-        del self.action
+        if self.editor_widget_action is not None:
+            self.toolbar.removeAction(self.editor_widget_action)
+        self.toolbar.removeAction(self.field_picker_action)
+        self.toolbar.removeAction(self.layer_picker_action)
+        self.toolbar.removeAction(self.action_paint)
+        del self.action_paint
         del self.toolbar
 
 
@@ -51,7 +59,12 @@ class ValuePainter:
 
 
     def updateFieldPicker(self):
-        self.field_picker.setLayer(self.layer_picker.currentLayer())
+        if isinstance(self.layer_picker.currentLayer(), QgsVectorLayer):
+            self.paint_tool.setLayer(self.layer_picker.currentLayer())
+            self.field_picker.setLayer(self.layer_picker.currentLayer())
+        else:
+            self.paint_tool.setLayer(None)
+            self.field_picker.setLayer(None)
 
 
     def updateEditorWidget(self):
@@ -90,3 +103,44 @@ class ValuePainter:
             result = QLineEdit()
 
         return result
+
+
+    def togglePaintTool(self):
+        print('paint mode:', self.action_paint.isChecked())
+        canvas = self.iface.mapCanvas()
+        canvas.setMapTool(self.paint_tool)
+
+
+    def updateCurrentLayer(self):
+        layer is self.iface.activeLayer()
+        #self.paint_tool.
+
+
+    def featureIdentified(self, feat):
+        print('hiero')
+        print(feat)
+        print(feat.id())
+        print(feat.attributes())
+        layer = self.iface.activeLayer()
+        if layer == self.layer_picker.currentLayer():
+            print('same layer')
+            if layer.isEditable():
+                field_name = self.field_picker.currentField()
+                field_index = layer.fields().lookupField(field_name)
+                print(field_index)
+                value = self.getEditorWidgetValue()
+                print('value', value)
+                feat.setAttribute(field_index, value)
+                layer.updateFeature(feat)
+                layer.triggerRepaint()
+            else:
+                print('Layer {} not editable'.format(layer.name()))
+
+
+    def getEditorWidgetValue(self):
+        widget = self.editor_widget
+        if isinstance(widget, QComboBox):
+            return widget.currentText()
+        elif isinstance(widget, QLineEdit):
+            return widget.text()
+        return None
