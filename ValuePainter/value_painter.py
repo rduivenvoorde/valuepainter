@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAction, QMessageBox, QLineEdit, QComboBox
+from PyQt5.QtWidgets import QAction, QLineEdit, QComboBox
 
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox, QgsMapToolIdentifyFeature
 
@@ -91,7 +91,6 @@ class ValuePainter:
             result = QComboBox()
             map = ews.config()['map']
             for item in map:
-                print(item)
                 for key in item:
                     if item[key] == QgsValueMapFieldFormatter.NULL_VALUE:
                         value = None
@@ -117,7 +116,7 @@ class ValuePainter:
     def featureIdentified(self, feat):
         layer = self.iface.activeLayer()
         if layer == self.layer_picker.currentLayer():
-            print('same layer')
+            #print('same layer')
             if layer.isEditable():
                 field_name = self.field_picker.currentField()
                 field_index = layer.fields().lookupField(field_name)
@@ -125,6 +124,9 @@ class ValuePainter:
                 feat.setAttribute(field_index, value)
                 layer.updateFeature(feat)
                 layer.triggerRepaint()
+            else:
+                pass
+                #print('layer not editable')
 
 
     def getEditorWidgetValue(self):
