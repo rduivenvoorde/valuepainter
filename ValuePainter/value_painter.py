@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QAction, QMessageBox, QLineEdit, QComboBox
 
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox, QgsMapToolIdentifyFeature
 
-from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer
+from qgis.core import QgsMapLayerProxyModel, QgsVectorLayer, QgsValueMapFieldFormatter
 
 
 
@@ -93,7 +93,11 @@ class ValuePainter:
             for item in map:
                 print(item)
                 for key in item:
-                    result.addItem(key, item[key])
+                    if item[key] == QgsValueMapFieldFormatter.NULL_VALUE:
+                        value = None
+                    else:
+                        value = item[key]
+                    result.addItem(key, value)
 
         if ews.type() == 'TextEdit':
             result = QLineEdit()
@@ -126,7 +130,7 @@ class ValuePainter:
     def getEditorWidgetValue(self):
         widget = self.editor_widget
         if isinstance(widget, QComboBox):
-            return widget.currentText()
+            return widget.currentData()
         elif isinstance(widget, QLineEdit):
             return widget.text()
         return None
